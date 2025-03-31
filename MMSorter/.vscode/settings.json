@@ -1,0 +1,17 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+	"files.eol": "\n",
+	"debug.openDebug": "neverOpen",
+	"python.linting.enabled": false,
+	"python.languageServer": "Pylance",
+	"python.analysis.diagnosticSeverityOverrides": {
+		"reportMissingModuleSource": "none",
+		"reportShadowedImports": "none"
+	},
+	"python.analysis.extraPaths": [
+		"",
+		"/Users/milan-a/.vscode/extensions/joedevivo.vscode-circuitpython-0.2.0-darwin-arm64/stubs",
+		"/Users/milan-a/Library/Application Support/Code/User/globalStorage/joedevivo.vscode-circuitpython/bundle/20250319/adafruit-circuitpython-bundle-py-20250319/lib"
+	],
+	"circuitpython.board.version": null
+}
