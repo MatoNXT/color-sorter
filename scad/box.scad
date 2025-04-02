@@ -2,7 +2,7 @@
 * MachineBlocks
 * https://machineblocks.com/examples/boxes-enclosures
 *
-* Box 8x8
+* Box 9x9
 * Copyright (c) 2022 - 2025 Jan Philipp Knoeller <pk@pksoftware.de>
 *
 * Published under license:
@@ -77,11 +77,11 @@ baseHeightAdjustment = 0.0;
 //Adjustment of each side (mm)
 baseSideAdjustment = -0.1;
 //Diameter of the knobs (mm)
-knobSize = 5.0;
+knobSize = 5.1;
 //Thickness of the walls (mm)
 wallThickness = 1.5;
 //Diameter of the Z-Tubes (mm)
-tubeZSize = 6.4;
+tubeZSize = 6.3;
 
 block(
     grid=[boxSizeX, boxSizeY],
