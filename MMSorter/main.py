@@ -7,28 +7,25 @@ from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
 from collections import deque
 
-# Initialize motor (belt on Port A)
-belt_motor = Motor(Port.A)
 
-# Initialize color sensor (on Port S1)
-sensor = ColorSensor(Port.S1)
+# Sensor and Motor Setup
+sensor = ColorSensor(Port.S2)
+belt_motor = Motor(Port.A)
 
 # Parameters
 BUFFER_SIZE = 8
 STABILITY_THRESHOLD = 0.7
 SAMPLE_INTERVAL_MS = 50
 REFLECTION_THRESHOLD = 15
-
-# Define valid object colors
 VALID_COLORS = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.BROWN, Color.WHITE}
 
-# Start the belt motor running forward
-belt_motor.run(200)  # speed in degrees per second (adjust as needed)
+# Start the belt
+belt_motor.run(200)
 
-# Buffer for recent color samples
-color_buffer = deque(maxlen=BUFFER_SIZE)
+# Initialize buffer as a list
+color_buffer = []
 
-# Helper: Count most common color in buffer
+# Manual mode function (replaces Counter)
 def most_common_color(buffer):
     freq = {}
     for color in buffer:
@@ -39,29 +36,33 @@ def most_common_color(buffer):
     most_common = max(freq.items(), key=lambda x: x[1])
     return most_common  # (color, count)
 
-# Main color detection logic
 def get_stable_color():
-    # Check if object is detected via reflection
+    # Object presence check via reflection
     if sensor.reflection() < REFLECTION_THRESHOLD:
         color_buffer.clear()
         return None
 
     current_color = sensor.color()
 
-    # Ignore background belt and unknown colors
+    # Ignore black (belt) and unknown colors
     if current_color == Color.BLACK or current_color not in VALID_COLORS:
         return None
 
-    # Add color to buffer
+    # Add to buffer
     color_buffer.append(current_color)
 
+    # Keep buffer at fixed size
+    if len(color_buffer) > BUFFER_SIZE:
+        color_buffer.pop(0)
+
+    # Wait for enough samples
     if len(color_buffer) < BUFFER_SIZE:
         return None
 
-    # Evaluate most common color
+    # Get the most common color
     color, count = most_common_color(color_buffer)
 
-    if count / len(color_buffer) >= STABILITY_THRESHOLD and color in VALID_COLORS:
+    if count / len(color_buffer) >= STABILITY_THRESHOLD:
         return color
     else:
         return None
