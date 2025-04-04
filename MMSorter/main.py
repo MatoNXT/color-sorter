@@ -1,10 +1,9 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick
-from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, InfraredSensor, UltrasonicSensor, GyroSensor)
+from pybricks.ev3devices import Motor, TouchSensor, ColorSensor
 from pybricks.iodevices import I2CDevice
-from pybricks.parameters import Port, Stop, Direction, Button, Color
-from pybricks.tools import wait, StopWatch, DataLog
-from pybricks.robotics import DriveBase
+from pybricks.parameters import Port, Direction, Color
+from pybricks.tools import wait
 from pybricks.media.ev3dev import SoundFile, ImageFile
 
 # Parameters
@@ -13,10 +12,9 @@ BELT_SPEED = 150
 params = {
     'color_sensor': {
         'buffer_size': 10,            # Number of measurements for color
-        'belt_threshold': 15,         # Number of measurements to detect the belt
-        'stability_threshold': 0.7,   # Percentage of when color is declared stable
-        'sample_interval_ms': 50,     # Interval between color measurements
-        'reflection_threshold': 15,   # Reflection threshold to detect the object on belt
+        'belt_threshold': 15,         # Maximum allowed non-valid readings before giving up
+        'stability_threshold': 0.7,   # Fraction of identical readings required for stability
+        'sample_interval_ms': 50,     # Interval between color measurements in ms
         'valid_colors': {
             Color.RED,
             Color.GREEN,
@@ -65,7 +63,7 @@ params = {
             'beep': 700,
             'wait_ms': 3000
         },
-        Color.WHITE : {
+        Color.WHITE: {
             'servo': 2,
             'open': 1000,
             'close': 1500,
@@ -88,91 +86,104 @@ params = {
         }
     }
 }
-#Initialize the EV3
-nxtservo = I2CDevice(Port.S3, 0x58) # Create an I2C device on Port 3 with NXTServo's 7-bit address (0x58)
+
+# Initialize devices
+nxtservo = I2CDevice(Port.S3, 0x58)  # I2C device on Port S3 with NXTServo's address
 ev3_brick = EV3Brick()
 ev3_touch = TouchSensor(Port.S1)
 ev3_color = ColorSensor(Port.S4)
-ev3_color_buffer = []
 ev3_motor_belt = Motor(Port.A, Direction.COUNTERCLOCKWISE)
 
-#
-##
-### Functions
-##
-#
-def get_color(buffer):
+def get_most_common_color(buffer):
+    """Return the most frequently detected color and its count."""
     freq = {}
     for color in buffer:
         if color is not None:
             freq[color] = freq.get(color, 0) + 1
     if not freq:
         return None, 0
-    get_color = max(freq.items(), key=lambda x: x[1])
-    return get_color  # (color, count)
+    common_color, count = max(freq.items(), key=lambda item: item[1])
+    return common_color, count
 
 def get_sensor_color():
-    ev3_color_buffer.clear()
+    """
+    Sample the color sensor until a stable reading is obtained or the belt is undetected.
+    Returns a color or None if a stable color is not detected.
+    """
+    color_buffer = []
     belt_detected = 0
-    while (len(ev3_color_buffer) < params['color_sensor']['buffer_size'] and belt_detected < params['color_sensor']['belt_threshold']):
+    while (len(color_buffer) < params['color_sensor']['buffer_size'] and
+           belt_detected < params['color_sensor']['belt_threshold']):
         current_color = ev3_color.color()
-        if (current_color in params['color_sensor']['valid_colors']):
-            ev3_color_buffer.append(current_color)
-            belt_detected = 0
+        if current_color in params['color_sensor']['valid_colors']:
+            color_buffer.append(current_color)
+            belt_detected = 0  # reset if a valid color is read
         else:
-            belt_detected =+ 1
-    color = None
-    if (len(ev3_color_buffer) >= params['color_sensor']['buffer_size']):
-        color, count = get_color(ev3_color_buffer)
-        if count / len(ev3_color_buffer) < params['color_sensor']['stability_threshold']:
-          color = None
-    return color
+            belt_detected += 1
+        wait(params['color_sensor']['sample_interval_ms'])
+    if len(color_buffer) >= params['color_sensor']['buffer_size']:
+        common_color, count = get_most_common_color(color_buffer)
+        if count / len(color_buffer) < params['color_sensor']['stability_threshold']:
+            return None
+        return common_color
+    return None
 
 def servo_reset():
-    for i in range(1, 3):
-        nxtservo_set_servo(i, params['servo'][i]['reset_positioin']+params['servo'][i]['calibration'])
+    """Reset all servos to their default positions."""
+    for servo in params['servo']:
+        reset_pos = params['servo'][servo]['reset_position'] + params['servo'][servo]['calibration']
+        nxtservo_set_servo(servo, reset_pos)
     wait(100)
 
 def nxtservo_set_servo(servo: int, position: int):
-    position = position + params['servo'][servo]['calibration']
-    if position < 500: position = 500
-    if position > 2500: position = 2500
+    """
+    Set the specified servo to a given position.
+    The position is adjusted for calibration and clamped between 500 and 2500.
+    """
+    position += params['servo'][servo]['calibration']
+    position = max(500, min(2500, position))
     high_byte = (position >> 8) & 0xFF
     low_byte = position & 0xFF
-    nxtservo.write(params['servo'][servo]['nxt_register'],bytes([low_byte, high_byte]))
+    nxtservo.write(params['servo'][servo]['nxt_register'], bytes([low_byte, high_byte]))
 
 def read_voltage():
-    volts = nxtservo.read(VOLTAGE_REGISTER)
-    return volts
+    """Read and return the voltage from the nxtservo."""
+    return nxtservo.read(VOLTAGE_REGISTER)
 
-#
-##
-### Main program
-##
-#
-print("Ready...")
-# ev3.light.off()
+def perform_sort_action(color):
+    """Perform the sort action based on the detected color."""
+    action = params['sort_action'][color]
+    servo_num = action['servo']
+    # Beep with the color-specific frequency
+    ev3_brick.speaker.beep(frequency=action['beep'], duration=100)
+    servo_reset()
+    # Open the servo to let the object pass to the designated bin
+    nxtservo_set_servo(servo_num, action['open'])
+    wait(action['wait_ms'])
+    ev3_brick.speaker.beep(frequency=300, duration=100)
+    # Close the servo after sorting
+    nxtservo_set_servo(servo_num, action['close'])
 
-while (True):
-    if ev3_touch.pressed(): break
+def main():
+    print("Ready...")
+    # Wait for the touch sensor to be pressed to start
+    while not ev3_touch.pressed():
+        wait(10)
+    ev3_brick.speaker.beep(frequency=3000, duration=100)
+    servo_reset()
+    # Start the belt motor
+    ev3_motor_belt.run(BELT_SPEED)
 
-ev3_brick.speaker.beep(frequency=3000, duration=100)
-servo_reset()
-# ev3_brick.speaker.set_speech_options(language= 'de', voice='f2', pitch=1)
-# ev3_brick.speaker.say("Acthung starting belt")
-ev3_motor_belt.run(BELT_SPEED)
+    while True:
+        detected_color = get_sensor_color()
+        if detected_color is not None:
+            perform_sort_action(detected_color)
+        if ev3_touch.pressed():
+            break
 
-while (True):
-    col = get_sensor_color()
-    if col is not None:
-        ev3_brick.speaker.beep(frequency=params['sort_action'][col]['beep'], duration=100)
-        servo_reset()
-        nxtservo_set_servo(params['sort_action'][col]['servo'], params['sort_action'][col]['open'])
-        wait(nxtservo_set_servo(params['sort_action'][col]['servo'], params['sort_action'][col]['wait_ms']))
-        ev3_brick.speaker.beep(frequency=300, duration=100)
-        nxtservo_set_servo(params['sort_action'][col]['servo'], params['sort_action'][col]['close'])
+    # Stop the belt and reset servos at the end
+    ev3_motor_belt.stop()
+    servo_reset()
 
-    if ev3_touch.pressed(): break
-
-#end of while
-servo_reset()
+if __name__ == '__main__':
+    main()
