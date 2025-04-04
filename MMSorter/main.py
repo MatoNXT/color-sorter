@@ -1,20 +1,78 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick
-from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor,
-                                 InfraredSensor, UltrasonicSensor, GyroSensor)
+from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, InfraredSensor, UltrasonicSensor, GyroSensor)
 from pybricks.parameters import Port, Stop, Direction, Button, Color
 from pybricks.tools import wait, StopWatch, DataLog
 from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
+from collections import deque
 
+# Initialize motor (belt on Port A)
+belt_motor = Motor(Port.A)
 
-# This program requires LEGO EV3 MicroPython v2.0 or higher.
-# Click "Open user guide" on the EV3 extension tab for more information.
+# Initialize color sensor (on Port S1)
+sensor = ColorSensor(Port.S1)
 
+# Parameters
+BUFFER_SIZE = 8
+STABILITY_THRESHOLD = 0.7
+SAMPLE_INTERVAL_MS = 50
+REFLECTION_THRESHOLD = 15
 
-# Create your objects here.
-ev3 = EV3Brick()
+# Define valid object colors
+VALID_COLORS = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.BROWN, Color.WHITE}
 
+# Start the belt motor running forward
+belt_motor.run(200)  # speed in degrees per second (adjust as needed)
 
-# Write your program here.
-ev3.speaker.beep()
+# Buffer for recent color samples
+color_buffer = deque(maxlen=BUFFER_SIZE)
+
+# Helper: Count most common color in buffer
+def most_common_color(buffer):
+    freq = {}
+    for color in buffer:
+        if color is not None:
+            freq[color] = freq.get(color, 0) + 1
+    if not freq:
+        return None, 0
+    most_common = max(freq.items(), key=lambda x: x[1])
+    return most_common  # (color, count)
+
+# Main color detection logic
+def get_stable_color():
+    # Check if object is detected via reflection
+    if sensor.reflection() < REFLECTION_THRESHOLD:
+        color_buffer.clear()
+        return None
+
+    current_color = sensor.color()
+
+    # Ignore background belt and unknown colors
+    if current_color == Color.BLACK or current_color not in VALID_COLORS:
+        return None
+
+    # Add color to buffer
+    color_buffer.append(current_color)
+
+    if len(color_buffer) < BUFFER_SIZE:
+        return None
+
+    # Evaluate most common color
+    color, count = most_common_color(color_buffer)
+
+    if count / len(color_buffer) >= STABILITY_THRESHOLD and color in VALID_COLORS:
+        return color
+    else:
+        return None
+
+# Main loop
+while True:
+    stable_color = get_stable_color()
+
+    if stable_color:
+        print("Stable color detected:", stable_color)
+    else:
+        print("Waiting for valid color...")
+
+    wait(SAMPLE_INTERVAL_MS)
