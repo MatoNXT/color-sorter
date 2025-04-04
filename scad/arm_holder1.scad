@@ -15,12 +15,15 @@ use <mod/block.scad>;
 
 
 // base
-lego_brick([0,0,0]  ,[3,4,3],[true,false,"classic"]);
-lego_brick([0,0,3]  ,[2,4,3],[true,false,"none"]);
-lego_brick([-1,0,6]  ,[2,4,3],[true,true,"none"]);
-lego_brick([-1,0,9]  ,[2,2,3],[true,true,"none"]);
-lego_brick([-1,2,9]  ,[2,2,3],[false,true,"none"]);
+lego_brick([0,0,0]   ,[3,4,3],[true,false,"classic"]);
+lego_brick([0,0,3]   ,[2,4,3],[true,false,"none"]);
+lego_brick([4,0,3]  ,[2,2,3],[true,true,"none"]);
+lego_brick([4,2,3]  ,[2,2,3],[false,true,"none"]);
 lego_brick([-1,-2,3] ,[1,8,3],[true,false,"classic"]);
+difference(){
+    lego_brick([4,0,0]  ,[2,4,3],[true,true,"classic"]);
+    translate([40,24,0])cylinder(7.2, d=8, $fn=50);
+}
 
 
 module lego_brick(position, shape_size, params) {
@@ -51,7 +54,7 @@ module brick(shape_size,params) {
     pillars = true;
 
     // Whether brick should have Technic holes along X-axis.
-    holesX = false;
+    holesX = params[3];
     // Whether brick should have Technic holes along Y-axis.
     holesY = false;
     // Whether brick should have Technic holes along Z-axis.

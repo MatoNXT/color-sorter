@@ -22,10 +22,11 @@ difference() {
     union(){
         rotate([0,0,90])translate([3.7,-34.5,0])drawBeam("xxx",false,1);
         rotate([0,0,0])translate([-2,4.2,0])drawBeam("xxxxx",false,1);
-        rotate([0,0,0])translate([0,0,0])drawBeam("xxxxxxoxxxo",false,2);
-        rotate([0,0,0])translate([32,0,-5])drawBeam("xxxxxxo",false,1);
+        rotate([0,0,0])translate([0,0,0])drawBeam("xxxxxxoxxo",false,2);
+        rotate([0,0,0])translate([32,0,-5])drawBeam("xxxxxo",false,1);
     }
     #translate([-2,8,-1])cylinder(d=5, h=17, $fn=100);
+    #translate([-2,8,7.8])cylinder(d=8.5, h=8, $fn=100);
 }
 
 /* [Hidden] */

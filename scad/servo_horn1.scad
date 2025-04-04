@@ -24,10 +24,10 @@ difference(){
     union(){
         rotate([0,0,90])translate([-8.5,-35.5,0])drawBeam("xxx",false,1);
         drawBeam("xxxxx", false, 1);
-        rotate([0,0,0])translate([0,3.85,0])drawBeam("xxxxxxoxxxo",false, 2);
+        rotate([0,0,0])translate([0,3.85,0])drawBeam("xxxxxxoxxo",false, 2);
         translate([0,-1,0])drawBeam("xxxxx", false, 1);
         translate([-1.1,-.5,0])drawBeam("xxxxx", false, 1);
-        rotate([0,0,0])translate([32,3.85,-5])drawBeam("xxxxxxo",false,1);
+        rotate([0,0,0])translate([32,3.85,-5])drawBeam("xxxxxo",false,1);
     }
     union(){
         //translate([0,0.15,0])cube([16.2,7,4.2]);
@@ -37,7 +37,7 @@ difference(){
                 translate([16,0]) circle(d=3.8,$fn = 100);
             }
         translate([0,3.35,0])cylinder(d=6.7, h=4.2, $fn=100);
-        translate([0,3.35,0])cylinder(d=5, h=16, $fn=100);
+        translate([0,3.35,0])cylinder(d=5, h=16, $fn=100);        
     }
 }
 
