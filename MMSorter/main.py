@@ -9,7 +9,7 @@ from pybricks.media.ev3dev import SoundFile, ImageFile
 # Parameters
 VOLTAGE_REGISTER = 0x41
 BELT_SPEED = 150
-params = {
+config = {
     'color_sensor': {
         'buffer_size': 10,            # Number of measurements for color
         'belt_threshold': 15,         # Maximum allowed non-valid readings before giving up
@@ -112,26 +112,26 @@ def get_sensor_color():
     """
     color_buffer = []
     belt_detected = 0
-    while (len(color_buffer) < params['color_sensor']['buffer_size'] and
-           belt_detected < params['color_sensor']['belt_threshold']):
+    while (len(color_buffer) < config['color_sensor']['buffer_size'] and
+           belt_detected < config['color_sensor']['belt_threshold']):
         current_color = ev3_color.color()
-        if current_color in params['color_sensor']['valid_colors']:
+        if current_color in config['color_sensor']['valid_colors']:
             color_buffer.append(current_color)
             belt_detected = 0  # reset if a valid color is read
         else:
             belt_detected += 1
-        wait(params['color_sensor']['sample_interval_ms'])
-    if len(color_buffer) >= params['color_sensor']['buffer_size']:
+        wait(config['color_sensor']['sample_interval_ms'])
+    if len(color_buffer) >= config['color_sensor']['buffer_size']:
         common_color, count = get_most_common_color(color_buffer)
-        if count / len(color_buffer) < params['color_sensor']['stability_threshold']:
+        if count / len(color_buffer) < config['color_sensor']['stability_threshold']:
             return None
         return common_color
     return None
 
 def servo_reset():
     """Reset all servos to their default positions."""
-    for servo in params['servo']:
-        reset_pos = params['servo'][servo]['reset_position'] + params['servo'][servo]['calibration']
+    for servo in config['servo']:
+        reset_pos = config['servo'][servo]['reset_position'] + config['servo'][servo]['calibration']
         nxtservo_set_servo(servo, reset_pos)
     wait(100)
 
@@ -140,11 +140,11 @@ def nxtservo_set_servo(servo: int, position: int):
     Set the specified servo to a given position.
     The position is adjusted for calibration and clamped between 500 and 2500.
     """
-    position += params['servo'][servo]['calibration']
+    position += config['servo'][servo]['calibration']
     position = max(500, min(2500, position))
     high_byte = (position >> 8) & 0xFF
     low_byte = position & 0xFF
-    nxtservo.write(params['servo'][servo]['nxt_register'], bytes([low_byte, high_byte]))
+    nxtservo.write(config['servo'][servo]['nxt_register'], bytes([low_byte, high_byte]))
 
 def read_voltage():
     """Read and return the voltage from the nxtservo."""
@@ -152,7 +152,7 @@ def read_voltage():
 
 def perform_sort_action(color):
     """Perform the sort action based on the detected color."""
-    action = params['sort_action'][color]
+    action = config['sort_action'][color]
     servo_num = action['servo']
     # Beep with the color-specific frequency
     ev3_brick.speaker.beep(frequency=action['beep'], duration=100)
