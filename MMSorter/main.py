@@ -11,10 +11,10 @@ VOLTAGE_REGISTER = 0x41
 BELT_SPEED = 150
 config = {
     'color_sensor': {
-        'buffer_size': 10,            # Number of measurements for color
+        'buffer_size': 8,            # Number of measurements for color
         'belt_threshold': 15,         # Maximum allowed non-valid readings before giving up
         'stability_threshold': 0.7,   # Fraction of identical readings required for stability
-        'sample_interval_ms': 50,     # Interval between color measurements in ms
+        'sample_interval_ms': 20,     # Interval between color measurements in ms
         'valid_colors': {
             Color.RED,
             Color.GREEN,
@@ -91,7 +91,7 @@ config = {
 nxtservo = I2CDevice(Port.S3, 0x58)  # I2C device on Port S3 with NXTServo's address
 ev3_brick = EV3Brick()
 ev3_touch = TouchSensor(Port.S1)
-ev3_color = ColorSensor(Port.S4)
+ev3_color = ColorSensor(Port.S2)
 ev3_motor_belt = Motor(Port.A, Direction.COUNTERCLOCKWISE)
 
 def get_most_common_color(buffer):
@@ -112,8 +112,9 @@ def get_sensor_color():
     """
     color_buffer = []
     belt_detected = 0
-    while (len(color_buffer) < config['color_sensor']['buffer_size'] and
-           belt_detected < config['color_sensor']['belt_threshold']):
+    while (len(color_buffer) < config['color_sensor']['buffer_size']
+           #and belt_detected < config['color_sensor']['belt_threshold']
+          ):
         current_color = ev3_color.color()
         if current_color in config['color_sensor']['valid_colors']:
             color_buffer.append(current_color)
