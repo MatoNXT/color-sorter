@@ -28,17 +28,17 @@ config = {
         1: {
             'nxt_register': 0x42,
             'reset_position': 1500,
-            'calibration': 0
+            'calibration': 20
         },
         2: {
             'nxt_register': 0x44,
             'reset_position': 1500,
-            'calibration': 0
+            'calibration': 20
         },
         3: {
             'nxt_register': 0x46,
             'reset_position': 1500,
-            'calibration': 0
+            'calibration': -15
         }
     },
     'sort_action': {
