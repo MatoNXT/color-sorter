@@ -26,11 +26,12 @@ def main():
         color_sorter.beep()
         color_sorter.reset()
         color_sorter.motor_belt_run()
-
         print("Press touch sensor to finish...")
         while color_sorter.keep_running:
             detected_color = color_sorter.color_sensor_read()
             if detected_color is not None:
+                recognized_color = detected_color
+                print("Color is: ", recognized_color)
                 perform_sort_action(detected_color)
             wait(10) # to lower CPU load
 
