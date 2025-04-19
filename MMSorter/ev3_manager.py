@@ -137,15 +137,15 @@ class EV3Manager:
 
     def motor_belt_run(self, speed=150):
         try:
+            print("Starting belt motor...")
             self.motor_belt.run(speed)
-            print("Starting motor...")
         except Exception as e:
             self.handle_error("Belt Motor run error", e)
 
     def motor_belt_stop(self):
         try:
+            print("Stopping belt motor...")
             self.motor_belt.stop()
-            print("Stopping motor")
         except Exception as e:
             self.handle_error("Belt Motor stop error", e)
 
@@ -204,14 +204,14 @@ class EV3Manager:
             position = max(500, min(2500, position))
             high_byte = (position >> 8) & 0xFF
             low_byte = position & 0xFF
+            print("Set servo [{}] position to [{}]...".format(servo, position))
             self.nxtservo.write(self.config['servo'][servo]['nxt_register'], bytes([low_byte, high_byte]))
-            print("Servo is opening...")
         except Exception as e:
             self.handle_error("Servo {} error".format(servo), e)
 
     def reset(self):
         """Reset all servos to their default positions."""
-        print("Servo is closing...")
+        print("Reset all servos to their default positions...")
         for servo in self.config['servo']:
             reset_pos = self.config['servo'][servo]['reset_position'] + self.config['servo'][servo]['calibration']
             self.servo_set(servo, reset_pos)

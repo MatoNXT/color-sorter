@@ -13,10 +13,13 @@ def perform_sort_action(color):
     color_sorter.beep(frequency=action['beep'], duration=100)
     color_sorter.reset()
     # Open the servo to let the object pass to the designated bin
+    print("Opening servo [{}] for color [{}]".format(servo_num, color))
     color_sorter.servo_set(servo_num, action['open'])
+    print("Waiting [{}]".format(action['wait_ms']))
     wait(action['wait_ms'])
     color_sorter.beep(frequency=300, duration=100)
     # Close the servo after sorting
+    print("Closing servo [{}] for color [{}]".format(servo_num, color))
     color_sorter.servo_set(servo_num, action['close'])
 
 def main():
@@ -30,8 +33,7 @@ def main():
         while color_sorter.keep_running:
             detected_color = color_sorter.color_sensor_read()
             if detected_color is not None:
-                recognized_color = detected_color
-                print("Color is: ", recognized_color)
+                print("Recognised color [{}] ".format(detected_color))
                 perform_sort_action(detected_color)
             wait(10) # to lower CPU load
 
